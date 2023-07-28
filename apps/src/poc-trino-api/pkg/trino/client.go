@@ -18,11 +18,9 @@ func NewClient(host string) *Client {
 	return &Client{Host: host}
 }
 
-// func (c *Client) FetchData(query model.Query) (*model.QueryResult, error) {
-func (c *Client) FetchData(query model.Query) (interface{}, error) {
-
+func (c *Client) createTrinoConn() (*sql.DB, error) {
 	config := &trino.Config{
-		ServerURI:         "http://foobar@my-trino.trino.svc.cluster.local:8080",
+		ServerURI:         "http://foobar@trino.local:80",
 		SessionProperties: map[string]string{"query_priority": "1"},
 	}
 
@@ -36,8 +34,11 @@ func (c *Client) FetchData(query model.Query) (interface{}, error) {
 		log.Println("Error opening connection: ", err)
 		return nil, err
 	}
-	defer db.Close()
 
+	return db, nil
+}
+
+func (c *Client) buildSQL(query model.Query) string {
 	sql := fmt.Sprintf("SELECT * FROM %s.%s.%s", query.Catalog, query.Schema, query.Table)
 	if query.QueryParams.Offset > 0 {
 		sql = fmt.Sprintf("%s ORDER BY name", sql)
@@ -50,13 +51,10 @@ func (c *Client) FetchData(query model.Query) (interface{}, error) {
 		sql = fmt.Sprintf("%s LIMIT %d", sql, query.QueryParams.Limit)
 	}
 
-	rows, err := db.Query(sql)
-	if err != nil {
-		log.Println("Error executing query: ", err)
-		return nil, err
-	}
-	defer rows.Close()
+	return sql
+}
 
+func processRows(rows *sql.Rows) ([]map[string]interface{}, error) {
 	var results []map[string]interface{}
 	columns, err := rows.Columns()
 	if err != nil {
@@ -87,4 +85,23 @@ func (c *Client) FetchData(query model.Query) (interface{}, error) {
 	}
 
 	return results, nil
+}
+
+func (c *Client) FetchData(query model.Query) (interface{}, error) {
+	db, err := c.createTrinoConn()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	sql := c.buildSQL(query)
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Println("Error executing query: ", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	return processRows(rows)
 }

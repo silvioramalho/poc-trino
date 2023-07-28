@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -21,10 +20,9 @@ func NewServer(authenticator *auth.Authenticator, trinoClient *trino.Client) *Se
 	}
 
 	r := mux.NewRouter()
-
-	// Apply the authenticator middleware to all routes
 	r.Use(authenticator.Middleware)
 	r.Use(auth.PermissionMiddleware)
+	r.Use(ContentTypeMiddleware)
 
 	// Routes
 	r.HandleFunc("/{catalog}/{schema}/{table}", handler.Query).Methods("GET")
@@ -33,10 +31,9 @@ func NewServer(authenticator *auth.Authenticator, trinoClient *trino.Client) *Se
 }
 
 func (s *Server) Run(addr string) {
-	result := fmt.Sprintf("Server is running on %v", addr)
-	log.Println(result)
+	log.Printf("Server is starting on %v\n", addr)
 	err := http.ListenAndServe(addr, s.Router)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to start server on %v: %v\n", addr, err)
 	}
 }

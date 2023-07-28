@@ -2,13 +2,12 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/coreos/go-oidc"
-	"github.com/golang-jwt/jwt"
 	"golang.org/x/oauth2"
 )
 
@@ -51,51 +50,38 @@ func NewAuthenticator(issuer, clientID, clientSecret string) *Authenticator {
 
 func (a *Authenticator) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rawAccessToken := r.Header.Get("Authorization")
-		parts := strings.Split(rawAccessToken, " ")
-		if len(parts) != 2 {
-			http.Error(w, "invalid Authorization header", http.StatusUnauthorized)
+		// Extract raw access token from the Authorization header
+		rawAccessToken, err := extractToken(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		rawAccessToken = parts[1]
 
+		// Verify the access token
 		idToken, err := a.Verifier.Verify(context.Background(), rawAccessToken)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("unable to verify ID Token: %v", err), http.StatusUnauthorized)
 			return
 		}
 
-		var claims jwt.MapClaims
-		if err := idToken.Claims(&claims); err != nil {
-			http.Error(w, fmt.Sprintf("unable to extract claims from ID Token: %v", err), http.StatusUnauthorized)
+		// Extract permissions from the ID Token
+		permissions, err := extractPermissions(idToken)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("unable to extract permissions: %v", err), http.StatusUnauthorized)
 			return
 		}
 
-		permissionsJSON, ok := claims["data_permissions"]
-		if !ok {
-			http.Error(w, "permissions claim not found in token", http.StatusUnauthorized)
-			return
-		}
-
-		permissionsArray, ok := permissionsJSON.([]interface{})
-		if !ok || len(permissionsArray) < 1 {
-			http.Error(w, "permissions claim is not a JSON array or is empty", http.StatusUnauthorized)
-			return
-		}
-
-		permissionsString, ok := permissionsArray[0].(string)
-		if !ok {
-			http.Error(w, "permissions claim array does not contain a string", http.StatusUnauthorized)
-			return
-		}
-
-		var permissions Permissions
-		if err := json.Unmarshal([]byte(permissionsString), &permissions); err != nil {
-			http.Error(w, "unable to parse permissions claim: "+err.Error(), http.StatusUnauthorized)
-			return
-		}
-
+		// Add permissions to context and call the next handler
 		ctx := context.WithValue(r.Context(), permissionsKey, permissions)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func extractToken(r *http.Request) (string, error) {
+	rawAccessToken := r.Header.Get("Authorization")
+	parts := strings.Split(rawAccessToken, " ")
+	if len(parts) != 2 {
+		return "", errors.New("invalid Authorization header")
+	}
+	return parts[1], nil
 }
