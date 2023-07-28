@@ -11,16 +11,16 @@ import (
 )
 
 type Client struct {
-	Host string
+	ServerURI string
 }
 
-func NewClient(host string) *Client {
-	return &Client{Host: host}
+func NewClient(serverURI string) *Client {
+	return &Client{ServerURI: serverURI}
 }
 
 func (c *Client) createTrinoConn() (*sql.DB, error) {
 	config := &trino.Config{
-		ServerURI:         "http://foobar@trino.local:80",
+		ServerURI:         c.ServerURI,
 		SessionProperties: map[string]string{"query_priority": "1"},
 	}
 
