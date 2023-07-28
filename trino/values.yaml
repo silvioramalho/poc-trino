@@ -1,0 +1,36 @@
+image:
+  tag: 422
+
+additionalCatalogs:
+  postgresql: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://my-postgresql:5432/trino_demo
+    connection-user=trino_demo_user
+    connection-password=trino_demo_password
+  keycloakdb: |
+    connector.name=postgresql
+    connection-url=jdbc:postgresql://keycloak-postgresql.tools.svc.cluster.local:5432/db_keycloak
+    connection-user=bn_keycloak
+    connection-password=123456
+  minio: |
+    connector.name=hive
+    hive.metastore.uri=thrift://my-hive-metastore:9083
+    hive.s3.path-style-access=true
+    hive.s3.endpoint=http://my-minio:9000
+    hive.s3.aws-access-key=minio_access_key
+    hive.s3.aws-secret-key=minio_secret_key
+    hive.non-managed-table-writes-enabled=true
+    hive.s3select-pushdown.enabled=true
+    hive.storage-format=ORC
+    hive.allow-drop-table=true
+  redis: |
+    connector.name=redis
+    redis.table-names=test
+    redis.nodes=my-redis-master:6379
+    redis.password=trino_demo_password
+    redis.table-description-dir=/etc/redis
+
+secretMounts:
+  - name: redis-table-schema-volumn
+    path: /etc/redis
+    secretName: redis-table-definition

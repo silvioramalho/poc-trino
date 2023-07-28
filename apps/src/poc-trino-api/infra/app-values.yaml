@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: poc-trino-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: poc-trino-api
+  template:
+    metadata:
+      labels:
+        app: poc-trino-api
+    spec:
+      containers:
+      - name: poc-trino-api
+        image: registry-docker-registry-server.default.svc.cluster.local:5000/poc-trino-api:latest
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poc-trino-api
+spec:
+  selector:
+    app: poc-trino-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

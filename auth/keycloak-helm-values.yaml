@@ -1,0 +1,45 @@
+image:
+  registry: docker.io
+  repository: bitnami/keycloak
+  tag: 21.1.1-debian-11-r4
+  pullPolicy: IfNotPresent
+  debug: false
+  
+auth:
+  adminUser: admin
+  existingSecret: "keycloak"
+  passwordSecretKey: "PASSWORD"
+
+production: false
+proxy: edge
+
+keycloakConfigCli:
+  enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    username: bn_keycloak
+    database: db_keycloak
+    existingSecret: "postgres"
+    secretKeys:
+      adminPasswordKey: "ADMIN_PASSWORD"
+      userPasswordKey: "USER_PASSWORD"
+  architecture: standalone
+
+# externalDatabase:
+#   host: "10.0.0.4"
+#   port: 5432
+#   database: db_keycloak
+#   existingSecret: "postgres"
+#   existingSecretUserKey: "USER"
+#   existingSecretPasswordKey: "PASSWORD"
+
+cache:
+  enabled: false
+
+logging:
+  output: default
+  level: INFO
+
+ 

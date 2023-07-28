@@ -1,0 +1,84 @@
+replicaCount: 1
+
+image:
+  repository: jeffail/benthos
+  pullPolicy: IfNotPresent
+  tag: latest
+
+env:
+  - name: BENTHOS_HTTP_SERVER_PATH
+    value: /payload/{external_id}
+  - name: BENTHOS_LABEL_NAME
+    value: enqueueallkafka 
+  - name: BENTHOS_KAFKA_GENERAL_TOPIC
+    value: my-topic
+  - name: BENTHOS_KAFKA_HOST
+    value: my-kafka-cluster-kafka-bootstrap:9092
+
+
+config: |-
+  input:
+    label: httpserver_${BENTHOS_LABEL_NAME}
+    http_server:
+      path: ${BENTHOS_HTTP_SERVER_PATH}
+      timeout: 60s
+      allowed_verbs:
+        - POST
+      sync_response:
+        status: "200"
+        headers:
+          Content-Type: application/json
+
+  pipeline:
+    processors:
+      - resource: add_date_to_metadata
+      - branch:
+          result_map: meta = meta()
+          processors:
+            - resource: extract_external_id            
+            - resource: get_general_topic
+            - resource: extract_local_target_url
+            - resource: build_target_url
+            - resource: log_meta
+
+  output:
+    label: "kafka_output"
+    kafka:
+      addresses: [ ${BENTHOS_KAFKA_HOST} ]
+      topic: '${! meta("kafka_topic") }'
+      key: '${! meta("external_id") }'
+      max_retries: 3
+      target_version: 1.0.0
+      tls:
+        enabled: false
+        skip_cert_verify: true
+
+  processor_resources:
+    - label: extract_external_id
+      bloblang: |
+          meta external_id = if meta("external_id") != null {
+            meta("external_id")
+          }
+
+    - label: get_general_topic
+      bloblang: |
+          meta kafka_topic = env("BENTHOS_KAFKA_GENERAL_TOPIC").or("my-topic")
+
+    - label: extract_local_target_url
+      bloblang: |
+          meta local_target_url = env("BENTHOS_TARGET_DOMAIN").or("http://app")
+
+    - label: build_target_url
+      bloblang: |
+          meta target_url = "%s%s".format(meta("local_target_url"), meta("http_server_request_path"))
+    
+    - label: log_meta
+      log:
+        message: ${! meta("kafka_topic")}
+      
+    - label: add_date_to_metadata
+      bloblang: |
+          root = this
+          root.metadata = {}
+          root.metadata.dateInput = now()
+
