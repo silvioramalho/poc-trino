@@ -5,16 +5,20 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/silvioramalho/poc-trino-api/config"
-	"github.com/silvioramalho/poc-trino-api/pkg/api"
-	"github.com/silvioramalho/poc-trino-api/pkg/auth"
-	"github.com/silvioramalho/poc-trino-api/pkg/trino"
+	"github.com/silvioramalho/poc-trino-api/internal/config"
+	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
+	server "github.com/silvioramalho/poc-trino-api/internal/port/http"
+	"github.com/silvioramalho/poc-trino-api/internal/port/trino"
 )
 
 func main() {
 
 	if os.Getenv("ENVIRONMENT") != "k8s" {
-		err := godotenv.Load()
+		envFile := ".env"
+		if os.Getenv("DEBUG") == "true" {
+			envFile = "../.env"
+		}
+		err := godotenv.Load(envFile)
 		if err != nil {
 			log.Fatal("Error loading .env file")
 		}
@@ -29,7 +33,7 @@ func main() {
 
 	trinoClient := trino.NewClient(cfg.TrinoServerUri)
 
-	server := api.NewServer(authenticator, trinoClient)
+	server := server.NewServer(authenticator, trinoClient)
 
 	server.Run(cfg.AppServerAddrress)
 }
