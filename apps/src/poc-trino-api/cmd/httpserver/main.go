@@ -7,8 +7,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/silvioramalho/poc-trino-api/internal/config"
 	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
-	server "github.com/silvioramalho/poc-trino-api/internal/port/http"
-	"github.com/silvioramalho/poc-trino-api/internal/port/trino"
+	server "github.com/silvioramalho/poc-trino-api/internal/services/http"
+	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
 )
 
 func loadEnv() {

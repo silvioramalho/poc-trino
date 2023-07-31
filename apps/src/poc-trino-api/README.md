@@ -2,6 +2,11 @@
 
 ## TODO:
 
+* Adicionar healthcheck
+
+Adicoinar endpoints de healthcheck
+
+
 * Adicionar rodapé nos resultados das consultas:
 
 ```

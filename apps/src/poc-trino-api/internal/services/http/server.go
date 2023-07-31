@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
 	handler "github.com/silvioramalho/poc-trino-api/internal/handler/http"
-	"github.com/silvioramalho/poc-trino-api/internal/port/trino"
+	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
 )
 
 type Server struct {

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
 	"github.com/silvioramalho/poc-trino-api/internal/model"
-	"github.com/silvioramalho/poc-trino-api/internal/port/trino"
+	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
 )
 
 type Handler struct {
