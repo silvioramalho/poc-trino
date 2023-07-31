@@ -11,8 +11,7 @@ import (
 	"github.com/silvioramalho/poc-trino-api/internal/port/trino"
 )
 
-func main() {
-
+func loadEnv() {
 	if os.Getenv("ENVIRONMENT") != "k8s" {
 		envFile := ".env"
 		if os.Getenv("DEBUG") == "true" {
@@ -23,6 +22,11 @@ func main() {
 			log.Fatal("Error loading .env file")
 		}
 	}
+}
+
+func main() {
+
+	loadEnv()
 
 	cfg := config.LoadConfig()
 
