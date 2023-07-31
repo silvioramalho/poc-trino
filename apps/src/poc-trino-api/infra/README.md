@@ -14,5 +14,17 @@ docker push registry-docker-registry-server.default.svc.cluster.local:5000/poc-t
 ## Publish
 
 ```bash
-kubectl apply -f deployment.yaml
+kubectl apply -f infra/app-values.yaml
+```
+
+## Delete
+
+```bash
+kubectl delete -f infra/app-values.yaml
+```
+
+## Create Configuration
+
+```bash
+kubectl create configmap poc-trino-api-config -n trino --from-env-file=.env.k8s
 ```

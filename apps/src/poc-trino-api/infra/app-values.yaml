@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: poc-trino-api
+  namespace: trino
 spec:
   replicas: 3
   selector:
@@ -17,11 +18,15 @@ spec:
         image: registry-docker-registry-server.default.svc.cluster.local:5000/poc-trino-api:latest
         ports:
         - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: poc-trino-api-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: poc-trino-api
+  namespace: trino
 spec:
   selector:
     app: poc-trino-api
