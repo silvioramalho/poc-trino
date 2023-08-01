@@ -7,18 +7,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
 	handler "github.com/silvioramalho/poc-trino-api/internal/handler/http"
-	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
 )
 
 type Server struct {
 	Router *mux.Router
 }
 
-func NewServer(authenticator *auth.Authenticator, trinoClient *trino.Client) *Server {
-	handler := &handler.Handler{
-		TrinoClient:   trinoClient,
-		Authenticator: authenticator,
-	}
+func NewServer(handler *handler.Handler, authenticator *auth.Authenticator) *Server {
 
 	r := mux.NewRouter()
 	r.Use(authenticator.Middleware)

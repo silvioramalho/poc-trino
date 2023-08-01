@@ -7,8 +7,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/silvioramalho/poc-trino-api/internal/config"
 	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
+	handler "github.com/silvioramalho/poc-trino-api/internal/handler/http"
+	"github.com/silvioramalho/poc-trino-api/internal/port/catalog"
 	server "github.com/silvioramalho/poc-trino-api/internal/services/http"
-	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
 )
 
 func loadEnv() {
@@ -30,14 +31,17 @@ func main() {
 
 	cfg := config.LoadConfig()
 
+	catalogCfg := catalog.NewCatalog(cfg.CatalogService, cfg.CatalogServerUri)
+	catalogService := catalogCfg.GetService()
+
 	authenticator := auth.NewAuthenticator(
 		cfg.AuthIssuer,
 		cfg.AuthClientID,
 		cfg.AuthClientSecret)
 
-	trinoClient := trino.NewClient(cfg.TrinoServerUri)
+	handler := handler.NewHandler(catalogService)
 
-	server := server.NewServer(authenticator, trinoClient)
+	server := server.NewServer(handler, authenticator)
 
 	server.Run(cfg.AppServerAddrress)
 }

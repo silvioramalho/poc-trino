@@ -4,7 +4,7 @@
 
 * Adicionar healthcheck
 
-Adicoinar endpoints de healthcheck
+Adicionar endpoints de healthcheck
 
 
 * Adicionar rodapé nos resultados das consultas:

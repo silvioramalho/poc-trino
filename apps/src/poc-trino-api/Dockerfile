@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Compile o aplicativo Go
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/httpserver/main.go
 
 # Etapa de execução
 FROM alpine:latest

@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Permissions struct {
+type permissions struct {
 	Catalogs map[string]map[string][]string `json:"permissions"`
 }
 
@@ -25,7 +25,6 @@ func PermissionMiddleware(next http.Handler) http.Handler {
 
 		catalog, schema, table := getCatalogSchemaTable(mux.Vars(r))
 
-		// O código abaixo é um exemplo e deve ser substituído pela lógica de verificação de permissões real
 		if !permissions.CanAccess(catalog, schema, table) {
 			http.Error(w, "Unauthorized: insufficient permissions", http.StatusUnauthorized)
 			return
@@ -35,12 +34,9 @@ func PermissionMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (p *Permissions) CanAccess(catalog, schema, table string) bool {
-	// Verifique se o catálogo existe.
+func (p *permissions) CanAccess(catalog, schema, table string) bool {
 	if schemas, ok := p.Catalogs[catalog]; ok {
-		// O catálogo existe, verifique se o esquema existe.
 		if tables, ok := schemas[schema]; ok {
-			// O esquema existe, verifique se a tabela existe.
 			for _, t := range tables {
 				if t == table {
 					return true
@@ -52,14 +48,14 @@ func (p *Permissions) CanAccess(catalog, schema, table string) bool {
 	return false
 }
 
-func getPermissionsFromContext(r *http.Request) (Permissions, error) {
+func getPermissionsFromContext(r *http.Request) (permissions, error) {
 	ctx := r.Context()
-	permissions, ok := ctx.Value(permissionsKey).(Permissions)
+	p, ok := ctx.Value(permissionsKey).(permissions)
 	if !ok {
-		return Permissions{}, errors.New("no permissions found")
+		return permissions{}, errors.New("no permissions found")
 	}
 
-	return permissions, nil
+	return p, nil
 }
 
 func getCatalogSchemaTable(vars map[string]string) (string, string, string) {
@@ -70,31 +66,31 @@ func getCatalogSchemaTable(vars map[string]string) (string, string, string) {
 	return catalog, schema, table
 }
 
-func extractPermissions(idToken *oidc.IDToken) (Permissions, error) {
+func extractPermissions(idToken *oidc.IDToken) (permissions, error) {
 	var claims jwt.MapClaims
 	if err := idToken.Claims(&claims); err != nil {
-		return Permissions{}, fmt.Errorf("unable to extract claims from ID Token: %w", err)
+		return permissions{}, fmt.Errorf("unable to extract claims from ID Token: %w", err)
 	}
 
 	permissionsJSON, ok := claims["data_permissions"]
 	if !ok {
-		return Permissions{}, errors.New("permissions claim not found in token")
+		return permissions{}, errors.New("permissions claim not found in token")
 	}
 
 	permissionsArray, ok := permissionsJSON.([]interface{})
 	if !ok || len(permissionsArray) < 1 {
-		return Permissions{}, errors.New("permissions claim is not a JSON array or is empty")
+		return permissions{}, errors.New("permissions claim is not a JSON array or is empty")
 	}
 
 	permissionsString, ok := permissionsArray[0].(string)
 	if !ok {
-		return Permissions{}, errors.New("permissions claim array does not contain a string")
+		return permissions{}, errors.New("permissions claim array does not contain a string")
 	}
 
-	var permissions Permissions
-	if err := json.Unmarshal([]byte(permissionsString), &permissions); err != nil {
-		return Permissions{}, fmt.Errorf("unable to parse permissions claim: %w", err)
+	var p permissions
+	if err := json.Unmarshal([]byte(permissionsString), &p); err != nil {
+		return permissions{}, fmt.Errorf("unable to parse permissions claim: %w", err)
 	}
 
-	return permissions, nil
+	return p, nil
 }

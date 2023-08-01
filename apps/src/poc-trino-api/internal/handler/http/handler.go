@@ -10,14 +10,18 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/silvioramalho/poc-trino-api/internal/handler/auth"
 	"github.com/silvioramalho/poc-trino-api/internal/model"
-	"github.com/silvioramalho/poc-trino-api/internal/services/trino"
+	"github.com/silvioramalho/poc-trino-api/internal/port/catalog"
 )
 
 type Handler struct {
-	TrinoClient   *trino.Client
-	Authenticator *auth.Authenticator
+	CatalogService catalog.CatalogService
+}
+
+func NewHandler(catalogService catalog.CatalogService) *Handler {
+	return &Handler{
+		CatalogService: catalogService,
+	}
 }
 
 func getRouteVars(vars map[string]string) (string, string, string, error) {
@@ -102,7 +106,7 @@ func (h *Handler) Query(w http.ResponseWriter, r *http.Request) {
 		QueryParams: qParams,
 	}
 
-	data, err := h.TrinoClient.FetchData(query)
+	data, err := h.CatalogService.FetchData(query)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
